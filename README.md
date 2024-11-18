@@ -6,7 +6,7 @@ This respository contains code for the following paper:
 
 ## Tower Assembly Task
 ### 1. Set weights on value, effort, and legibility (wV, wE, wL) in TASC_tower.py 
-### 2. Run TASC_tower.py to get policies for robot and human teammate
+### 2. Run ```TASC_tower.py``` to get policies for robot and human teammate
 ```
 python TASC_tower.py
 ```
