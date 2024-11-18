@@ -137,7 +137,7 @@ class SCA:
     """
         This function predicts the goal state and probability based off of
         the differences in the values of the states in the solved MDP
-        for each goal (maybe normalize each mdp state value?)
+        for each goal
     """
     def CG_markov(self, a):
         eq_p = 1.0 / len(self.G)
