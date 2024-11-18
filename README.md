@@ -17,7 +17,10 @@ This respository contains code for the following paper:
 ### 3. Input polices in ```MTurk_towers_effort.html```
 ### 4. User Study: Run ```MTurk_towers_effort.html``` on Google Chrome
 
-## Bibliography
+## Note:
+Due to IRB restrictions, we are not able to share our data. 
+
+## Citation
 If you find this repository is useful in your research, please cite the paper:
 ```
 @inproceedings{chang2020tasc,
