@@ -9,13 +9,13 @@ This respository contains code for the following paper:
 ### 2. In ```TASC_nav.py```, set weights on value, effort, and legibility (wV, wE, wL)
 ### 3. Run ```TASC_nv.py``` to get policies for robot and human teammate
 ### 4. For the navigation task, input polices in ```MTurk_Nav.html```. For the modified navigation task, input polices in ```MTurk_Modified_Nav.html```. 
-### 5. Run ```MTurk_Nav.html```, ```MTurk_Modified_Nav.html``` on Google Chrome
+### 5. User Studies: Run ```MTurk_Nav.html```, ```MTurk_Modified_Nav.html``` on Google Chrome
 
 ## Tower Assembly Task
 ### 1. Navigate to the Tower_Assembly directory and in ```TASC_tower.py```, set weights on value, effort, and legibility (wV, wE, wL)
 ### 2. Run ```TASC_tower.py``` to get policies for robot and human teammate
 ### 3. Input polices in ```MTurk_towers_effort.html```
-### 4. Run ```MTurk_towers_effort.html``` on Google Chrome
+### 4. User Study: Run ```MTurk_towers_effort.html``` on Google Chrome
 
 ## Bibliography
 If you find this repository is useful in your research, please cite the paper:
