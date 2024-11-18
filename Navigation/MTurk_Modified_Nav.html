@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8" />
+    <title>Navigation Game</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<script src="//uniqueturker.myleott.com/lib.js" type="text/javascript"></script>
+<script type="text/javascript">
+(function(){
+    var ut_id = "34791aeb45777bf952ea3610b27f0d0a";
+    if (UTWorkerLimitReached(ut_id)) {
+        document.getElementById('mturk_form').style.display = 'none';
+        document.getElementsByTagName('body')[0].innerHTML = "You have already completed the maximum number of HITs allowed by this requester. Please click 'Return HIT' to avoid any impact on your approval rating.";
+    }
+})();
+</script>
+<div id="instructions">
+    <h1> Instructions </h1>
+    <br>
+    <p>This HIT will take about 10 minutes.</p>
+    <br>
+    <p><strong>This HIT is periodically re-posted. If you’ve already completed this HIT previously, please do not complete it a second time. Resubmission will be rejected.</strong></p>
+    <br>
+    <p>We are studying how humans and robots can effectively collaborate together as a team.</p>
+    <br>
+    <p>For this HIT, your goal is to cooperate with a robot teammate to  move a remote-controlled car from its starting point to its final destination. 
+    <p>The robot knows the final destination. You will <strong>not</strong> be told what the final destination is, but you must try to help.</p>
+    </p>
+    <br>
+        <ul>
+            <li style="display: list-item;list-style-position: inside;">The gray square is the starting point (see below).</li>
+            <li style="display: list-item;list-style-position: inside;">The green squares are the possible destinations/goals.</li>
+            <li style="display: list-item;list-style-position: inside;">You can move to any of the squares outlined in blue.</li>
+            <li style="display: list-item;list-style-position: inside;">You and the robot take turns moving the remote-controlled car.</li>
+            <li style="display: list-item;list-style-position: inside;">The robot always makes the first move which is shown as the red line.</li>
+            <li style="display: list-item;list-style-position: inside;">After the robot’s turn, if a red line is not displayed, that means the robot selected to stay in the same location.</li>
+            <li style="display: list-item;list-style-position: inside;">After the robot’s turn, you will be asked to predict the robot's goal.</li>
+            <br>
+            <li style="display: list-item;list-style-position: inside;">After reaching the goal, you must click on the message box above the game screen to proceed.</li>
+            <li style="display: list-item;list-style-position: inside;"><strong>You must complete both questionnaires in order to receive payment.</strong></li>
+        </ul>
+    <br>
+    <p>Here is the study procedure:</p>
+    <br>
+    <p>1. Robot teammate program 1 </p>
+    <ul>
+        <li style="display: list-item;list-style-position: inside;">Practice session: 3 goals</li>
+        <li style="display: list-item;list-style-position: inside;">Test session: 3 goals</li>
+        <li style="display: list-item;list-style-position: inside;">Questionnaire</li>
+    </ul>
+    <br>
+    <p>2. Robot teammate program 2 </p>
+    <ul>
+        <li style="display: list-item;list-style-position: inside;">Practice session: 3 goals</li>
+        <li style="display: list-item;list-style-position: inside;">Test session: 3 goals</li>
+        <li style="display: list-item;list-style-position: inside;">Questionnaire</li>
+    </ul>
+<br>
+</div>
+<div style="display:none;">
+  <img id="source"
+       src="robot.png"
+       width="150" height="150">
+</div>
+<h1 id="banner" style="display: none;">Hello</h1>
+<div id="game">
+    <h3 id="currentrun" style="text-align:center;"> Practice Run </h3>
+    <h1 id="your_move" style="display: none;">Your Move</h1>
+    <div id="probe" style="display: none; border-style: solid;">
+        <p>Which goal do you think the robot is heading towards?</p>
+        <div>
+            <input type="radio" id="iq1a1" name="q1">
+            <label for="q1a1">1</label>
+        </div>
+        <div>
+            <input type="radio" id="iq1a2" name="q1">
+            <label for="q1a2">2</label>
+        </div>
+        <div>
+            <input type="radio" id="iq1a3" name="q1">
+            <label for="q1a3">3</label>
+        </div>
+        <br>
+        <p>How confident are you in your prediction?</p>
+        <div>
+            <input type="radio" id="iq2a1" name="q2">
+            <label for="q2a1">1-Not Confident</label>
+        </div>
+        <div>
+            <input type="radio" id="iq2a2" name="q2">
+            <label for="q2a2">2</label>
+        </div>
+        <div>
+            <input type="radio" id="iq2a3" name="q2">
+            <label for="q2a3">3-Somewhat Confident</label>
+        </div>
+        <div>
+            <input type="radio" id="iq2a4" name="q2">
+            <label for="q2a4">4</label>
+        </div>
+        <div>
+            <input type="radio" id="iq2a5" name="q2">
+            <label for="q2a5">5-Very Confident</label>
+        </div>
+        <br>
+        <button id="probe_done">Done</button>
+        <br>
+    </div>
+    <canvas id="popupCanvas" width="1000" height="200" style="display: none;"></canvas>
+    <canvas id="myCanvas" width="480" height="480" style="display: block;"></canvas>
+</div>
+
+
+<!-- You must include this JavaScript file -->
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+
+
+<script>
+
+    var offset;
+	  // Declarations:
+    var popup = document.getElementById("popupCanvas");
+    var popctx = popup.getContext("2d");
+    var popupActive = false;
+    popctx.font = "18px Comic Sans MS";
+    popctx.fillStyle = "black";
+    popctx.textAlign = "center";
+    popctx.fillText("You have reached the goal. Click on this message to continue.", popup.width/2, popup.height/2);
+    // add an event listener to the canvas to react when user clicks on the grid.
+    popup.addEventListener("click", popupManager, false);
+
+    // get the canvas element from the html
+    var canvas = document.getElementById("myCanvas");
+    // get it's context (object to be used in the script)
+    var ctx = canvas.getContext("2d");
+    // vars to initialize the grid
+    var cellsPerRow = 10;
+    var cellsPerCol = 10;
+    var cellLength = 480/cellsPerRow;
+    var myRectangles;
+    // vars used to initialize the game.
+    var startingPos;
+    var finalGoalState;
+    // var used to highligh the cells that the user can move to in each turn.
+    var traversablePos;
+    // stores the path taken by the user and robot to complete their task.
+    var myPath = [];
+    // var stores the current pos of the team in the grid.
+    var currentPos = startingPos;
+
+    // map stores data for different iterations of the game.
+    var gameIterations = new Map();
+    var iteration = 0;
+    var numIterations = 2;
+    //input: wV,wE,wL, starting state, goal state
+    gameIterations.set(0,[1, 0, 0, 5]); // baseline
+    gameIterations.set(1, [0.7 , 0 , 0.3, 5]); // legibility
+    // vars determine the conditions playes and num tasks per condition
+    var possibleGameOrders = [[0,1], [1,0]];
+    //var chosenOrder = getRandomElement(possibleGameOrders); //[0, ${condition}]
+    //var chosenOrder = [${condition}, ${condition}]
+    //var chosenOrder = [0,1];
+    var chosenOrder = possibleGameOrders[${condition}]
+    var algorithm = 1;
+    var tasksPerGame = 6;
+    var tasksCompleted = 0;
+
+
+    var robotActive = false;
+    //var robotPauseTime = 500;
+    var robotPauseTime = 1500; // in milliseconds
+    const robotImage = document.getElementById("source");
+    const robotImageDimW = 150;
+    const robotImageDimH = 200;
+
+    //var stores data used for analysing robot/human actions.
+    var runningGameData = [];
+    var finalGameData = new Map();
+    var t = 0;
+
+    // this list is used to randomly choose a goal for a particular condition
+    var possibleGoalStates = [91, 95, 98];
+    // this list is used to check if a state could be a goal state
+    var goalStates = [91, 95, 98];
+    // this list is used to set which states are obstacles.
+    var obstacleStates = [];
+
+    // variables used for determining robot action.
+    var l = 10;
+    var AR = 9;
+    var states = 101;
+    var goals = [91, 95, 98];
+    // values for each state based on the MDP.(for each goal)
+    var VsHuman = new Map();
+    VsHuman.set(91, [31.83710813990001, 32.26757534990001, 31.83710813990001, 31.358811239900007, 30.82737023990001, 30.236880239900007, 29.580780239900008, 28.851780239900013, 28.041780239900014, 27.141780239900015, 36.13699727090001, 36.615294170900015, 36.13699727090001, 35.60555627090001, 35.01506627090001, 34.35896627090001, 33.62996627090001, 32.81996627090001, 31.919966270900012, 30.919966270900012, 40.914651860900015, 41.44609286090001, 40.914651860900015, 40.324161860900006, 39.66806186090001, 38.93906186090001, 38.12906186090001, 37.2290618609, 36.2290618609, 31.919966270900012, 46.223156960900006, 46.813646960899995, 46.223156960900006, 45.567056960900004, 44.838056960900005, 44.0280569609, 43.128056960900004, 42.128056960900004, 37.2290618609, 32.81996627090001, 52.121495960900006, 52.77759596090001, 52.121495960900006, 51.3924959609, 50.582495960900005, 49.682495960900006, 48.682495960900006, 43.128056960900004, 38.12906186090001, 33.62996627090001, 58.6752059609, 59.4042059609, 58.6752059609, 57.865205960900006, 56.96520596090001, 55.96520596090001, 49.682495960900006, 44.0280569609, 38.93906186090001, 34.35896627090001, 65.95710596090001, 66.76710596090001, 65.95710596090001, 65.0571059609, 64.0571059609, 56.96520596090001, 50.582495960900005, 44.838056960900005, 39.66806186090001, 35.01506627090001, 74.0481059609, 74.94810596090001, 74.0481059609, 73.0481059609, 65.0571059609, 57.865205960900006, 51.3924959609, 45.567056960900004, 40.324161860900006, 35.60555627090001, 83.0381059609, 84.0381059609, 83.0381059609, 74.0481059609, 65.95710596090001, 58.6752059609, 52.121495960900006, 46.223156960900006, 40.914651860900015, 36.13699727090001, 84.0381059609, 94.13810596089999, 84.0381059609, 74.94810596090001, 66.76710596090001, 59.4042059609, 52.77759596090001, 46.813646960899995, 41.44609286090001, 36.615294170900015, -6.861894039100001]);
+    VsHuman.set(95, [29.580780239900008, 30.236880239900007, 30.82737023990001, 31.358811239900007, 31.83710813990001, 32.26757534990001, 31.83710813990001, 31.358811239900007, 30.82737023990001, 30.236880239900007, 33.62996627090001, 34.35896627090001, 35.01506627090001, 35.60555627090001, 36.13699727090001, 36.615294170900015, 36.13699727090001, 35.60555627090001, 35.01506627090001, 34.35896627090001, 38.12906186090001, 38.93906186090001, 39.66806186090001, 40.324161860900006, 40.914651860900015, 41.44609286090001, 40.914651860900015, 40.324161860900006, 39.66806186090001, 38.93906186090001, 43.128056960900004, 44.0280569609, 44.838056960900005, 45.567056960900004, 46.223156960900006, 46.813646960899995, 46.223156960900006, 45.567056960900004, 44.838056960900005, 44.0280569609, 48.682495960900006, 49.682495960900006, 50.582495960900005, 51.3924959609, 52.121495960900006, 52.77759596090001, 52.121495960900006, 51.3924959609, 50.582495960900005, 49.682495960900006, 49.682495960900006, 55.96520596090001, 56.96520596090001, 57.865205960900006, 58.6752059609, 59.4042059609, 58.6752059609, 57.865205960900006, 56.96520596090001, 55.96520596090001, 50.582495960900005, 56.96520596090001, 64.0571059609, 65.0571059609, 65.95710596090001, 66.76710596090001, 65.95710596090001, 65.0571059609, 64.0571059609, 56.96520596090001, 51.3924959609, 57.865205960900006, 65.0571059609, 73.0481059609, 74.0481059609, 74.94810596090001, 74.0481059609, 73.0481059609, 65.0571059609, 57.865205960900006, 52.121495960900006, 58.6752059609, 65.95710596090001, 74.0481059609, 83.0381059609, 84.0381059609, 83.0381059609, 74.0481059609, 65.95710596090001, 58.6752059609, 52.77759596090001, 59.4042059609, 66.76710596090001, 74.94810596090001, 84.0381059609, 94.13810596089999, 84.0381059609, 74.94810596090001, 66.76710596090001, 59.4042059609, -6.861894039100001]);
+    VsHuman.set(98, [27.141780239900015, 28.041780239900014, 28.851780239900013, 29.580780239900008, 30.236880239900007, 30.82737023990001, 31.358811239900007, 31.83710813990001, 32.26757534990001, 31.83710813990001, 30.919966270900012, 31.919966270900012, 32.81996627090001, 33.62996627090001, 34.35896627090001, 35.01506627090001, 35.60555627090001, 36.13699727090001, 36.615294170900015, 36.13699727090001, 31.919966270900012, 36.2290618609, 37.2290618609, 38.12906186090001, 38.93906186090001, 39.66806186090001, 40.324161860900006, 40.914651860900015, 41.44609286090001, 40.914651860900015, 32.81996627090001, 37.2290618609, 42.128056960900004, 43.128056960900004, 44.0280569609, 44.838056960900005, 45.567056960900004, 46.223156960900006, 46.813646960899995, 46.223156960900006, 33.62996627090001, 38.12906186090001, 43.128056960900004, 48.682495960900006, 49.682495960900006, 50.582495960900005, 51.3924959609, 52.121495960900006, 52.77759596090001, 52.121495960900006, 34.35896627090001, 38.93906186090001, 44.0280569609, 49.682495960900006, 55.96520596090001, 56.96520596090001, 57.865205960900006, 58.6752059609, 59.4042059609, 58.6752059609, 35.01506627090001, 39.66806186090001, 44.838056960900005, 50.582495960900005, 56.96520596090001, 64.0571059609, 65.0571059609, 65.95710596090001, 66.76710596090001, 65.95710596090001, 35.60555627090001, 40.324161860900006, 45.567056960900004, 51.3924959609, 57.865205960900006, 65.0571059609, 73.0481059609, 74.0481059609, 74.94810596090001, 74.0481059609, 36.13699727090001, 40.914651860900015, 46.223156960900006, 52.121495960900006, 58.6752059609, 65.95710596090001, 74.0481059609, 83.0381059609, 84.0381059609, 83.0381059609, 36.615294170900015, 41.44609286090001, 46.813646960899995, 52.77759596090001, 59.4042059609, 66.76710596090001, 74.94810596090001, 84.0381059609, 94.13810596089999, 84.0381059609, -6.861894039100001]);
+
+    var maxVs = new Map();
+    for (const entry of VsHuman.entries()) {
+        maxVs.set(entry[0], Math.max(...entry[1]));
+    }
+
+    // variables stores information about the state of the game (which cell we are currently in).
+    var s = null;
+    var sOld = null;
+    // variable stores the action taken by the human.
+    var aH = null;
+    // variable stores the actual human goal.
+    var humanGoal = 40;
+    // map used for printing/debugging
+    var moveStrings = new Map([[0, "up"], [1, "up right"], [2, "right"], [3, "down right"], [4, "down"], [5, "down left"], [6, "left"], [7, "up left"], [8, "idle"]]);
+
+    // these weights determine how the robot makes its choices.
+    var wE;
+    var wL;
+    var wV;
+
+
+    //Rectangle object stores information about each cell of grid.
+    function Rectangle(r, c, x, y, length, width, fillStyle, strokeStyle, text, lineWidth){
+      this.r = r;
+      this.c = c;
+      this.x = x;
+      this.y = y;
+      this.length = length;
+      this.width = width;
+      this.fillStyle = fillStyle;
+      this.strokeStyle = strokeStyle;
+      this.lineWidth = lineWidth;
+      this.text = text;
+    }
+    // define setters to change certain properties of the rectangle.
+    Rectangle.prototype = {
+      set fill(color){
+        this.fillStyle = color;
+      },
+
+      set stroke(color){
+        this.strokeStyle = color;
+      },
+
+      set lw(num){
+        this.lineWidth = num;
+      }
+    };
+
+    // utility functions:
+
+    // removes an element at random from a list and returns that element.
+    function getRandomElement(list){
+      var length = list.length;
+      var randIndex = getRandomInt(length);
+      var elementToReturn = list.splice(randIndex, 1)[0];
+      return elementToReturn;
+    }
+
+    //This function returns a random int between 0 and max (exclusive)
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    //This function returns the euclidean distance between two points.
+    function euclidean(p1, p2) {
+        var a = p1[0] - p2[0];
+        var b = p1[1] - p2[1];
+        return Math.sqrt( a*a + b*b );
+    }
+
+    // SCA functions:
+
+    // this function returns the next state given the current state and action.
+    function act(a, s, g) {
+        //if s is a goal state or the terminal state, go to terminal state no matter what action is taken
+        if (g==null && (isGoal(s) || s == states - 1)) {
+            return states - 1;
+        } else if (s == g || s == states - 1) {
+            return states - 1;
+        } //if a=0, try to move north
+        else if (a == 0 && s + l < states - 1 && !isObstacle(s + l)) {
+            return s + l;
+        } //if a=1, try to move northeast
+        else if (a == 1 && s + l + 1 < states - 1 && (s%l < l-1) && !isObstacle(s + l + 1)) {
+            return s + l + 1;
+        } //if a=2, try to move east
+        else if (a == 2 && s + 1 < states - 1 && (s%l < l-1) && !isObstacle(s + 1)) {
+            return s + 1;
+        } //if a=3, try to move southeast
+        else if (a == 3 && s - l + 1 >= 0 && (s%l < l-1) && !isObstacle(s - l + 1)) {
+            return s - l + 1;
+        } //if a=4, try to move south
+        else if (a == 4 && s - l >= 0 && !isObstacle(s - l)) {
+            return s - l;
+        } //if a=5, try to move southwest
+        else if (a == 5 && s - l - 1 >= 0 && (s%l > 0) && !isObstacle(s - l - 1)) {
+            return s - l - 1;
+        } //if a=6, try to move west
+        else if (a == 6 && s - 1 >= 0 && (s%l > 0) && !isObstacle(s - 1)) {
+            return s - 1;
+        } //if a=7, try to move northwest
+        else if (a == 7 && s + l - 1 <  states - 1 && (s%l > 0) && !isObstacle(s + l - 1)) {
+            return s + l - 1;
+        } //if a=8, stay//ctx.strokeStyle = "black";
+                      //ctx.fillStyle = "green";
+        else if (a == 8) {
+            return s;
+        }
+        return s;
+    }
+
+    //This function returns the probability of perceived effort given a previous
+    //state, action, and current state
+    function PrE(a, s, sNew) {
+      // highest effort for diagonal actions
+      // for MDP solution, want to min taking diagonal actions
+      if (a == 0 || a == 2 || a == 4 || a == 6)
+          return 0.5;
+      else if(a == 1 || a == 3 || a == 5 || a == 7)
+          return 0.70;
+      else
+          return 0.1;
+    }
+
+    //This function returns the legibility probability of goal G given a robot action a
+    function PrG(G, a) {
+        //sNew is predicted new state given action
+        var sNew = act(a, s, humanGoal);
+        //distG is the euclidean distance between the indices of G and s minus
+        //the euclidean distance between the indices of G and sNew
+        var distG = euclidean(square(G), square(s)) - euclidean(square(G), square(sNew));
+        //if the move is away from the goal, return probability of 0
+        //console.log("s: " + s + " sNew: " + sNew)
+        if (distG < 0) {
+            return 0;
+        }
+
+        //calculate euclidean distance difference measure for all goals
+        //keep track of total sum of ds for normalization purposes
+        var sumDist = 0;
+        var i;
+        for (i = 0; i < goals.length; i++) {
+            var d = euclidean(square(goals[i]), square(s)) - euclidean(square(goals[i]), square(sNew));
+            // disregard negatives and zeros.
+            if (d > 0) {
+                sumDist += d;
+            }
+        }
+
+        //if nothing changed (idle)
+        if (sumDist == 0) {
+            return 0;
+        } else {
+            return distG / sumDist;
+        }
+    }
+
+    // function PrG(G, a) {
+    //     //sNew is predicted new state given action
+    //     var sNew = act(a, s, humanGoal);
+
+    //     var minD = 10000;
+    //     var i;
+    //     for (i = 0; i < goals.length; i++) {
+    //         minD = Math.min(minD, euclidean(square(goals[i]), square(s)));
+    //     }
+
+    //     //distG is the euclidean distance between the indices of G and s minus
+    //     //the euclidean distance between the indices of G and sNew
+    //     var distG = euclidean(square(G), square(s)) - euclidean(square(G), square(sNew));
+    //     distG *= minD / euclidean(square(G), square(s));
+    //     //if the move is away from the goal, return probability of 0
+    //     //console.log("s: " + s + " sNew: " + sNew)
+    //     if (distG < 0) {
+    //         return 0;
+    //     }
+
+    //     //calculate euclidean distance difference measure for all goals
+    //     //keep track of total sum of ds for normalization purposes
+    //     var sumDist = 0;
+    //     var i;
+    //     for (i = 0; i < goals.length; i++) {
+    //         var d = euclidean(square(goals[i]), square(s)) - euclidean(square(goals[i]), square(sNew));
+    //         d *= minD / euclidean(square(goals[i]), square(s));
+    //         // disregard negatives and zeros.
+    //         if (d > 0) {
+    //             sumDist += d;
+    //         }
+    //     }
+
+    //     //if nothing changed (idle)
+    //     if (sumDist == 0) {
+    //         return 0;
+    //     } else {
+    //         return distG / sumDist;
+    //     }
+    // }
+
+    //This function predicts the goal state and probability based off of
+    //the differences in the values of the states in the solved MDP
+    //for each goal (maybe normalize each mdp state value?)
+    function CGMarkov(a) {
+        probs = [];
+        var i;
+        for (i = 0; i < goals.length; i++) {
+            if (humanGoal == goals[i]) {
+                probs.push(1);
+            } else {
+                probs.push(0);
+            }
+        }
+        return [humanGoal, 1, probs]
+    }
+
+    // function CGMarkov(a) {
+    //     var eqP = 1 / goals.length;
+    //     var eqProbs = [0.25, 0.25, 0.25, 0,25];
+    //     //if the person doesn't take an action, pick a random goal and assign equal % probability
+    //     if (a == null) {
+    //         var r = getRandomInt(goals.length);
+    //         return [goals[r], eqP, eqProbs];
+    //     }
+    //     var maxG = [];
+    //     var maxVal = 0;
+    //     //keep running sum of values for normalization
+    //     var actionValues = [];
+    //     var sumVals = 0;
+
+    //     //iterate through goals, calculating the difference in euclidean distance from old state to goal and new state to goal
+    //     //caused by each action
+    //     var nonNeg = []
+    //     var i;
+    //     for (i = 0; i < goals.length; i++) {
+    //         console.log("s: "+s)
+    //         console.log("s old: "+sOld)
+    //         //var val = VsHuman.get(goals[i])[s] - VsHuman.get(goals[i])[sOld];
+    //         // calculate distance from old state to goal - distance from new state to goal.
+    //         var val = euclidean(square(goals[i]), square(sOld)) - euclidean(square(goals[i]), square(s))
+    //         // maintain maximum difference goal mdp.
+    //         if (val > maxVal) {
+    //             maxG = [goals[i]];
+    //             maxVal = val;
+    //         } else if (val == maxVal) {
+    //             maxG.push(goals[i]);
+    //         }
+    //         // consider only positive differences.
+    //         if (val >= 0) {
+    //             sumVals += val;
+    //             nonNeg.push(true);
+    //         } else if (val < 0) {
+    //         	  nonNeg.push(false);
+    //         }
+
+    //         actionValues.push(val);
+    //     }
+    //     // if nothing changed, return uniform probabilities (idle)
+    //     if (sumVals == 0) {
+    //     	  var num = 0
+    //     	  for (i = 0; i < nonNeg.length; i++) {
+    //     	  	if (nonNeg[i]) {
+    //     	  		num++;
+    //     	  	}
+    //     	  }
+    //     	  if (num != 0) {
+    //     	  	eqP = 1 / num;
+    //     	  	for (i = 0; i < nonNeg.length; i++) {
+    //     	  		if (nonNeg[i]) {
+    //     	  			eqProbs[i] = eqP;
+    //     	  		} else {
+    //     	  			eqProbs[i] = 0;
+    //     	  		}
+    //     	  	}
+    //     	  }
+    //     	  return [goals[getRandomInt(goals.length)], eqP, eqProbs];
+    //     }
+
+    //     // normalize the (positive) difference values for each goal mdp
+    //     // assign probability of 0 if the difference is negative.
+    //     var probs = [0, 0, 0, 0];
+    //     for (i = 0; i < goals.length; i++) {
+    //         if (actionValues[i] > 0) {
+    //             probs[i] = actionValues[i] / sumVals;
+    //         }
+    //     }
+
+    //     var maxPr = maxVal / sumVals;
+    //     return [maxG[getRandomInt(maxG.length)], maxPr, probs];
+    // }
+
+    function reward(a) {
+        if (a % 2 == 1) {
+            return -2;
+        } else {
+            return -1;
+        }
+    }
+
+    // returns the action taken by the robot.
+    function robotAction() {
+        // variable stores information about each action.
+        var actionInfo = [];
+        // collect maximum value options for robot actions.
+        var mx = -100000;
+        var maxes = [];
+        // robot action.
+        var aR = null;
+        // predict the human's goal and action.
+        var tup = CGMarkov(aH);
+        var Gp = tup[0];
+        var p = tup[1];
+        var probs = tup[2];
+
+        var maxdV = 0;
+        var a;
+        for (a = 0; a < AR; a++) {
+            var sNew = act(a, s, humanGoal);
+            var u;
+            for (u = 0; u < goals.length; u++) {
+                dV = Math.abs(VsHuman.get(goals[u])[sNew] - VsHuman.get(goals[u])[s] + reward(a));
+                maxdV = Math.max(maxdV, dV)
+            }
+        }
+
+
+        // look through all possible actions.
+        for (a = 0; a < AR; a++) {
+            // examine the new state.
+            var sNew = act(a, s, humanGoal);
+
+            // calculate probability of effort.
+            var E = PrE(a, s, sNew);
+            // calculate probability that action a will be percieved as toward predicted goal
+            var L = PrG(Gp, a);
+            // calculate expected value of new state
+            var V = 0;
+            for (u = 0; u < goals.length; u++) {
+                V += probs[u] * ((VsHuman.get(goals[u])[sNew] - VsHuman.get(goals[u])[s] + reward(a)) / maxdV);
+            }
+            V = (V / 2) + 0.5
+            // combined value of Effort, Legibility, Value.
+            var val = wE*E + wL*L + wV*V;
+            actionInfo.push([a, wV*V, wE*E, wL*L, val]);
+
+            // if the value of this action is greater than previously seen, save it.
+            if (val > mx) {
+                mx = val;
+                maxes = [a];
+            } else if (val == mx) {
+                maxes.push(a);
+            }
+        }
+        var r = getRandomInt(maxes.length)
+        aR = maxes[r];
+        return [aR, actionInfo, Gp, probs];
+    }
+
+    //This function returns the index location of a state in the mdp state space
+    function square(s) {
+        return [s % l, s / l];
+    }
+
+    // game functions:
+
+    // function creates the grid, initializes al rectangle objects with info to draw the grid
+    function createGrid(){
+      myRectangles = new Map();
+      var r;
+      var c;
+      for(r = 0; r < cellsPerRow; r++){
+          for(c = 0; c < cellsPerCol; c++){
+              var fillStyle;
+              var strokeStyle;
+              var pos = [r,c];
+              var text = "";
+              if(isGoal(parseInt(""+c+r))){
+                  var i;
+                  for (i = 0; i < goals.length; i++) {
+                      if (r + c * 10 == goals[i]) {
+                          text = "" + (i + 1);
+                      }
+                  }
+                  fillStyle = "#98FB98"
+                  strokeStyle = "black";
+              } else {
+                  if(isObstacle(parseInt(""+c+r))){
+                      fillStyle = "black";
+                      strokeStyle = "black";
+                  }else if(r == startingPos[0] && c == startingPos[1]){
+                      fillStyle = "#B2B0B0";
+                      strokeStyle = "black";
+                  }
+                  else{
+                      fillStyle = "white";
+                      strokeStyle = "black";
+                  }
+              }
+            var rect = new Rectangle(r, c, cellLength*r, ((cellsPerCol-1-c)*cellLength), cellLength, cellLength, fillStyle, strokeStyle, text, 1);
+            var key = ""+c+""+r;
+            myRectangles.set(key, rect);
+          }
+      }
+    }
+
+    // function draws the grid on the canvas.
+    function drawGrid(){
+      //ctx.clearRect(0,0, canvas.width, canvas.height);
+      for(const key of myRectangles.keys()){
+        var myRect = myRectangles.get(key);
+        ctx.beginPath();
+        ctx.rect(myRect.x, myRect.y, myRect.length, myRect.width);
+        ctx.lineWidth = myRect.lineWidth;
+        ctx.fillStyle = myRect.fillStyle;
+        ctx.strokeStyle = myRect.strokeStyle;
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.font = "24px Ariel";
+        ctx.fillStyle = "black";
+        ctx.fillText(myRect.text, myRect.x + 16, myRect.y + myRect.length / 2 + 10);
+        ctx.closePath();
+      }
+      var i;
+      for(i = 0; i < myPath.length; i++){
+        var path = myPath[i];
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.moveTo(path[0], path[1]);
+        ctx.lineTo(path[2], path[3]);
+        ctx.strokeStyle = path[4]?"black":"red";
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.closePath();
+      }
+    }
+
+    // checks if a particular state is a goal state.
+    function isGoal(s) {
+        //return s == 40 || s == 59 || s == 92 || s == 98;
+        var i;
+        for(i = 0; i < goalStates.length; i++){
+          if(s == goalStates[i]){
+            return true;
+          }
+        }
+        return false;
+    }
+
+    // checks if a particular state is an obstacle state.
+    function isObstacle(s) {
+        //return s == 35 || s == 44 || s == 64;
+        var i;
+        for(i = 0; i < obstacleStates.length; i++){
+          if(s == obstacleStates[i]){
+            return true;
+          }
+        }
+        return false;
+    }
+
+    // given a current position, this function returns all possible cells that we can move to.
+    function getTraversablePositions(currentPos){
+      var i;
+      var u;
+      var tP = []
+      var tempPos;
+      // the possible cells we can move to are the cells surrounding us. (iterate over them).
+      for(i = -1; i <= 1; i++){
+        for(u = -1; u<= 1; u++){
+            tempPos = [currentPos[0]+i,currentPos[1]+u];
+            // ensure the cell is within the bounds of the grid.
+            if(tempPos[0] >= 0 && tempPos[0] <= 9 && tempPos[1] >= 0 && tempPos[1] <= 9){
+              // ensure the cell is not an obstacle cell.
+              if(!isObstacle(''+tempPos[1]+tempPos[0])){
+                tP.push(tempPos);
+              }
+            }
+        }
+      }
+      return tP;
+    }
+
+    function updateTraversablePos(){
+      var i;
+      for(i = 0; i < traversablePos.length; i++){
+        cell = traversablePos[i];
+        var key = ""+cell[1]+""+cell[0];
+        var myRect = myRectangles.get(key);
+        myRect.stroke = "#00BFFF";
+        myRect.lw = 4;
+        myRectangles.set(key, myRect);
+      }
+    }
+
+    function resetTraversablePos(){
+        var i;
+        for(i = 0; i < traversablePos.length; i++){
+          cell = traversablePos[i];
+          var key = ""+cell[1]+""+cell[0];
+          var myRect = myRectangles.get(key);
+          myRect.stroke = "black";
+          myRect.lw = 1;
+          myRectangles.set(key, myRect);
+        }
+    }
+
+    // add an event listener to the canvas to react when user clicks on the grid.
+    canvas.addEventListener("click", getClickPosition, false);
+    // this function is called whenever a click is registered.
+    function getClickPosition(e) {
+      if(!popupActive && !robotActive){
+        if(iteration <= numIterations){
+          // get the rect of the element the event is attached to.
+          var rect = e.target.getBoundingClientRect();
+          // subtract the x position (left) of the bounding rect from the clientX
+          var xPosition = e.clientX - rect.left;
+          // subtract the y position (top) of the bounding rect from the clientY
+          var yPosition = e.clientY - rect.top;
+          // update the game based on the x and y position of the click with respect to the canvas.
+          //updateGame(xPosition, yPosition);
+          updateGameHuman(xPosition, yPosition);
+        }
+      }
+    }
+
+    function robotGameAction(p) {
+    	// get the robot action given the current state.
+      var robotActionInfo = robotAction();
+      var aR = robotActionInfo[0];
+      var actionInfo = robotActionInfo[1];
+      var Gp = robotActionInfo[2];
+      var goalProbs = robotActionInfo[3];
+      // get the pos we have now travelled to due to the robot action.
+      var sR = act(aR, s, humanGoal);
+      var newPos = [sR%10, Math.floor(sR/10)];
+      var oldPos = p;
+      currentPos = newPos;
+      // update the grid to reflect the robot action.
+      updateState(oldPos, currentPos, false);
+      time = Date.now();
+      timestamp = time - offset;
+      addRobotFrame(timestamp, t, s, actionInfo, aR, goalProbs, Gp);
+      t++;
+      return [oldPos, currentPos]
+    }
+
+    function getHumanMove(oldPoscX, oldPoscY, currentPoscX, currentPoscY){
+        //[[0, "up"], [1, "up right"], [2, "right"], [3, "down right"], [4, "down"], [5, "down left"], [6, "left"], [7, "up left"], [8, "idle"]]
+        diffX = currentPoscX - oldPoscX;
+        diffY =  currentPoscY - oldPoscY;
+        if(diffX > 0){
+          if(diffY == 0){
+            return 2;
+          }else if(diffY > 0){
+            return 3;
+          }else{
+            return 1;
+          }
+        }
+        else if (diffX < 0) {
+          if(diffY == 0){
+            return 6;
+          }else if(diffY > 0){
+            return 5;
+          }else{
+            return 7;
+          }
+        }
+        else{
+          if(diffY > 0){
+            return 4;
+          }else if(diffY < 0){
+            return 0;
+          }else{
+            return 8;
+          }
+        }
+    }
+
+    function getGameNum(index) {
+            var gameNum = "Game "+(Math.floor(index / 4))+".";
+            if (index > 3) {
+                gameNum += (index - 3);
+            } else {
+                gameNum += index;
+            }
+            return gameNum;
+    }
+
+    function updateGameHuman(mouseX, mouseY){
+      var i;
+      var newPos;
+      var oldPos;
+      // iterate over the possible blocks.
+      for(i = 0; i < traversablePos.length; i++){
+        // find the coordinates the block spans.
+        var blockSpanX = [cellLength*traversablePos[i][0],cellLength*traversablePos[i][0] + cellLength-1]
+        var blockSpanY = [cellLength*(cellsPerCol-1-traversablePos[i][1]), cellLength*(cellsPerCol-1-traversablePos[i][1]) + cellLength - 1]
+        // if our mouse click coordinates are within this block, this is the block we will move to.
+        if(mouseX <= blockSpanX[1] && mouseX >= blockSpanX[0] && mouseY <= blockSpanY[1] && mouseY >= blockSpanY[0]){
+          // get the new position.
+          newPos = traversablePos[i];
+          // update our current and old state.
+          s = parseInt(""+newPos[1]+""+newPos[0]);
+          oldPos = currentPos;
+          sOld = parseInt(""+currentPos[1]+""+currentPos[0]);
+          currentPos = newPos;
+          // get the human action based on the cell we have moved to.
+          aH = updateState(oldPos, currentPos, true);
+          time = Date.now();
+          timestamp = time - offset;
+          //function addHumanFrame(t, s, actionTaken)
+          addHumanFrame(timestamp , t, sOld, aH);
+          t++;
+          resetTraversablePos();
+          traversablePos = getTraversablePositions(currentPos);
+          updateTraversablePos();
+          drawGrid();
+          if(humanGoal == parseInt(''+currentPos[1]+currentPos[0])){
+            //alert("you completed your task!");
+            var gameNum = getGameNum(tasksCompleted);
+            finalGameData.set(gameNum,runningGameData);
+            finalProbeData.set(gameNum,runningProbeData);
+            runningGameData = [];
+            runningProbeData = [];
+            popctx.fillText("You have reached the goal. Click on this message to continue.", popup.width/2, popup.height/2);
+            popupActive = true;
+            if(tasksCompleted == 3){
+              popctx.clearRect(0,0, popup.width, popup.height);
+              popctx.fillStyle = "#FFFF66";
+              popctx.fillRect(0, 0, popup.width, popup.height);
+              popctx.fillStyle = "black";
+              popctx.font = "24px Comic Sans MS";
+              popctx.fillText("You have completed the practice. Click on this message to start the game.", popup.width/2, popup.height/2);
+            }else if(tasksCompleted == 6){
+              popctx.clearRect(0,0, popup.width, popup.height);
+              popctx.fillText("You have completed the game. Click on this message to proceed to the questionnaire.", popup.width/2, popup.height/2);
+            }
+            //document.getElementById("myCanvas").style = "display : none;";
+            document.getElementById("popupCanvas").style = "display : block;";
+            //resetGame();
+            break;
+          }else{
+            robotActive = true;
+            document.getElementById("popupCanvas").style = "display : block;";
+            document.getElementById("your_move").style.display = "none";
+            popctx.fillText("The robot is thinking.", popupCanvas.width/2, popupCanvas.height / 2)
+            //popctx.fillText("The robot is thinking.", popupCanvas.width/4, popupCanvas.height / 2)
+            //popctx.drawImage(robotImage, popupCanvas.width/2 - robotImageDimW/2, popupCanvas.height/2 - robotImageDimH/2, robotImageDimW, robotImageDimH)
+            setTimeout(updateGameRobot, robotPauseTime);
+            break;
+          }
+        }
+      }
+    }
+
+    function updateGameRobot(){
+      popctx.clearRect(0,0, popup.width, popup.height);
+      document.getElementById("popupCanvas").style = "display : none;";
+      var tup = robotGameAction(currentPos)
+      oldPos = tup[0]
+      currentPos = tup[1]
+      resetTraversablePos();
+      traversablePos = getTraversablePositions(currentPos);
+      updateTraversablePos();
+      drawGrid();
+      startProbe();
+      //checkComplete();
+    }
+
+    var base1 = "iq1a";
+    var base2 = "iq2a";
+    function startProbe() {
+        var i = 0;
+        for (i = 0; i < goals.length; i++) {
+            document.getElementById(base1 + (i + 1)).checked = false;
+        }
+        for (i = 0; i < 5; i++) {
+            document.getElementById(base2 + (i + 1)).checked = false;
+        }
+        document.getElementById("probe").style.display = "block";
+    }
+
+    finalProbeData = new Map();
+    runningProbeData = [];
+    function endProbe() {
+        chosenGoal = -1;
+        var i;
+        for (i = 0; i < goals.length; i++) {
+            if (document.getElementById(base1 + (i + 1)).checked) {
+                chosenGoal = i;
+            }
+        }
+        chosenConfidence = -1;
+        for (i = 0; i < 5; i++) {
+            if (document.getElementById(base2 + (i + 1)).checked) {
+                chosenConfidence = i + 1;
+            }
+        }
+        if (chosenGoal != -1 && chosenConfidence != -1) {
+            runningProbeData.push([goals[chosenGoal], chosenConfidence])
+            document.getElementById("probe").style.display = "none";
+            document.getElementById("your_move").style.display = "block";
+            checkComplete();
+        }
+    }
+    document.getElementById("probe_done").addEventListener("click", endProbe)
+
+    function checkComplete() {
+      if(humanGoal == parseInt(''+currentPos[1]+currentPos[0])){
+        //alert("you completed your task!");
+        var gameNum = getGameNum(tasksCompleted);
+        finalGameData.set(gameNum,runningGameData);
+        finalProbeData.set(gameNum,runningProbeData);
+        runningGameData = [];
+        runningProbeData = [];
+        popctx.fillText("You have reached the goal. Click on this message to continue.", popup.width/2, popup.height/2);
+        popupActive = true;
+        if(tasksCompleted == 3){
+          popctx.clearRect(0,0, popup.width, popup.height);
+          popctx.fillStyle = "#FFFF66";
+          popctx.fillRect(0, 0, popup.width, popup.height);
+          popctx.fillStyle = "black";
+          popctx.font = "24px Comic Sans MS";
+          popctx.fillText("You have completed the practice. Click on this message to start the game.", popup.width/2, popup.height/2);
+        }else if(tasksCompleted == 6){
+          popctx.clearRect(0,0, popup.width, popup.height);
+          popctx.fillText("You have completed the game. Click on this message to proceed to the questionnaire.", popup.width/2, popup.height/2);
+        }
+        //document.getElementById("myCanvas").style = "display : none;";
+        document.getElementById("popupCanvas").style = "display : block;";
+        //resetGame();
+      }
+      robotActive = false;
+    }
+
+    function updateState(oldPos, currentPos, isHuman){
+      var oldPoscX = cellLength*oldPos[0]+cellLength/2;
+      var oldPoscY = cellLength*(cellsPerCol-1-oldPos[1])+cellLength/2;
+      var currentPoscX = cellLength*currentPos[0]+cellLength/2;
+      var currentPoscY = cellLength*(cellsPerCol-1-currentPos[1])+cellLength/2;
+      var move = 0;
+      if(isHuman){
+        move = getHumanMove(oldPoscX, oldPoscY, currentPoscX, currentPoscY);
+      }
+      myPath.push([oldPoscX, oldPoscY, currentPoscX, currentPoscY, isHuman])
+      return move;
+    }
+
+    function continueGame() {
+        document.getElementById("game").style = "display : block;";
+        document.getElementById("game" + (algorithm - 1) + "questions").style = "display : none;";
+        showBanner("Finished with robot teammate 1. Moving to robot teammate 2.", 2000, true);
+    }
+
+    function showBanner(text, milliseconds, restore) {
+        document.getElementById("banner").innerText = text;
+        document.getElementById("banner").style.display = "block";
+        document.getElementById("all_questions").style.display = "none";
+        document.getElementById("game").style.display = "none";
+        document.getElementById("instructions").style.display = "none";
+        setTimeout(hideBanner.bind(null, restore), milliseconds);
+    }
+
+    function hideBanner(restore) {
+        document.getElementById("banner").style.display = "none";
+        if (restore) {
+            document.getElementById("game").style.display = "block";
+            document.getElementById("instructions").style.display = "block";
+        }
+        document.getElementById("all_questions").style.display = "block";
+    }
+
+    function resetGame(){
+      popupActive = false;
+      popctx.clearRect(0,0, popup.width, popup.height);
+      popctx.font = "22px Comic Sans MS";
+      //popctx.fillText("You have reached the goal. Click on this message to continue.", popup.width/2, popup.height/2);
+      document.getElementById("popupCanvas").style = "display : none;";
+      //document.getElementById("myCanvas").style = "display : block;";
+
+      if(possibleGoalStates.length == 0) {
+          possibleGoalStates = [91,95,98];
+      }
+
+      if (tasksCompleted >= tasksPerGame) {
+          iteration++;
+          tasksCompleted = 0;
+          document.getElementById("game" + algorithm + "questions").style = "display : block;";
+          document.getElementById("game").style = "display : none;";
+          process(finalGameData);
+          assignHTMLElements();
+          document.getElementById("questions_done").addEventListener("click", continueGame);
+          showBanner("Finished the test session. Next is the questionnaire.", 2000, false);
+          algorithm++;
+      }
+
+      if (tasksCompleted == 3) {
+          showBanner("Finished practice. Next is the test session.", 2000, true);
+      }
+
+      if (tasksCompleted >= 3) {
+          document.getElementById("currentrun").textContent="Test Session";
+      } else {
+          document.getElementById("currentrun").textContent="Practice Session";
+      }
+
+      if(iteration >= numIterations) {
+        //alert("game over!")
+        popupActive = true;
+        return;
+      }else{
+        offset = Date.now();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 1;
+        game_data = gameIterations.get(chosenOrder[iteration]);
+        wV = game_data[0];
+        wE = game_data[1];
+        wL = game_data[2];
+        startingPos = [game_data[3]%10, Math.floor(game_data[3]/10)];
+        currentPos = startingPos;
+        s = game_data[3];
+        sOld = null;
+        aH = null;
+        humanGoal = getRandomElement(possibleGoalStates);
+        myPath = [];
+        t = 0;
+        createGrid();
+        robotGameAction(currentPos);
+        traversablePos = getTraversablePositions(currentPos);
+        updateTraversablePos();
+        drawGrid();
+        startProbe();
+        robotActive = true;
+        tasksCompleted++;
+      }
+    }
+
+    resetGame();
+
+    function popupManager(){
+      if (popupActive){
+        resetGame();
+      }
+    }
+    // functions used to process data from the game.
+
+    function addRobotFrame(timestamp, timestep, s, actionInfo, actionTaken, probs, Gp){
+      var wV = gameIterations.get(chosenOrder[iteration])[0];
+      var wE = gameIterations.get(chosenOrder[iteration])[1];
+      var wL = gameIterations.get(chosenOrder[iteration])[2];
+      var i;
+      for (i = 0; i < actionInfo.length; i++){
+        runningGameData.push([wV, wE, wL, timestamp, timestep, 'R', s, actionInfo[i][0], actionTaken, actionInfo[i][1], actionInfo[i][2], actionInfo[i][3], actionInfo[i][4], probs[0], probs[1], probs[2], probs[3], Gp, humanGoal]);
+      }
+    }
+
+    function addHumanFrame(timestamp, timestep, s, actionTaken){
+      var wV = gameIterations.get(chosenOrder[iteration])[0];
+      var wE = gameIterations.get(chosenOrder[iteration])[1];
+      var wL = gameIterations.get(chosenOrder[iteration])[2];
+      runningGameData.push([wV, wE, wL, timestamp, timestep, 'H', s, 'N/A', actionTaken, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A','N/A','N/A',humanGoal]);
+    }
+
+    var dataStrings = [];
+    var probeStrings = [];
+
+    function process(finalGameData){
+      console.log(finalGameData);
+      console.log(finalProbeData);
+      var i;
+      for(i = 0; i < tasksPerGame; i++){
+        var key = "Game "+(Math.floor(i/3))+"."+(1+(i%3));
+        console.log(key);
+        var gameData = finalGameData.get(key);
+        var u;
+        var gameString = key+"\n";
+        for(u = 0; u < gameData.length; u++){
+          var j;
+          var frame = gameData[u];
+          for(j = 0; j < frame.length; j++){
+            gameString += frame[j]+ ", ";
+          }
+          gameString += "\n";
+        }
+        probeString = "";
+        var probeData = finalProbeData.get(key);
+        for(u = 0; u < probeData.length; u++){
+          var j;
+          var frame = probeData[u];
+          for(j = 0; j < frame.length; j++){
+            probeString += frame[j]+ ", ";
+          }
+          probeString += "\n";
+        }
+        dataStrings.push(gameString);
+        probeStrings.push(probeString);
+      }
+    }
+
+    function assignHTMLElements(){
+      var i = (algorithm - 1) * 2
+      document.getElementById("game" + i + ".1").setAttribute("value", dataStrings[0])
+      document.getElementById("game" + i + ".2").setAttribute("value", dataStrings[1])
+      document.getElementById("game" + i + ".3").setAttribute("value", dataStrings[2])
+      document.getElementById("game" + (i + 1) + ".1").setAttribute("value", dataStrings[3])
+      document.getElementById("game" + (i + 1) + ".2").setAttribute("value", dataStrings[4])
+      document.getElementById("game" + (i + 1) + ".3").setAttribute("value", dataStrings[5])
+
+      document.getElementById("probe" + i + ".1").setAttribute("value", probeStrings[0])
+      document.getElementById("probe" + i + ".2").setAttribute("value", probeStrings[1])
+      document.getElementById("probe" + i + ".3").setAttribute("value", probeStrings[2])
+      document.getElementById("probe" + (i + 1) + ".1").setAttribute("value", probeStrings[3])
+      document.getElementById("probe" + (i + 1) + ".2").setAttribute("value", probeStrings[4])
+      document.getElementById("probe" + (i + 1) + ".3").setAttribute("value", probeStrings[5])
+
+      dataStrings = [];
+      probeStrings = [];
+    }
+
+</script>
+
+<!-- For the full list of available Crowd HTML Elements and their input/output documentation,
+      please refer to https://docs.aws.amazon.com/sagemaker/latest/dg/sms-ui-template-reference.html -->
+
+<!-- You must include crowd-form so that your task submits answers to MTurk -->
+<crowd-form answer-format="flatten-objects" id="all_questions">
+<!--style="display: none;""this.name=this.parentElement.nodeName+this.name;"-->
+<br>
+    <div id="game1questions" style="display: none;">
+    <div> Based on your experience in the test session, please answer <strong>ALL</strong> the questions below.</div>
+        <div>
+            <crowd-radio-group name="g1q01" required>
+                <div>
+                    1) The robot was trying to move in a way that helped me figure out which goal it was heading towards.
+                </div>
+                <crowd-radio-button name="g1q01a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q01a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q01a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q01a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q01a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q02" required>
+                <div>
+                    2) The robot was lazy.
+                </div>
+                <crowd-radio-button name="g1q02a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q02a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q02a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q02a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q02a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q03" required>
+                <div>
+                    3) The robot did <strong>not</strong> cooperate with me.
+                </div>
+                <crowd-radio-button name="g1q03a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q03a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q03a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q03a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q03a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q04" required>
+                <div>
+                    4) The robot did <strong>not</strong> moved in a manner that made its intention clear.
+                </div>
+                <crowd-radio-button name="g1q04a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q04a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q04a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q04a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q04a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q05" required>
+                <div>
+                    5) The robot put forth its best effort.
+                </div>
+                <crowd-radio-button name="g1q05a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q05a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q05a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q05a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q05a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q06" required>
+                <div>
+                    6) The robot tried to help me.
+                </div>
+                <crowd-radio-button name="g1q06a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q06a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q06a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q06a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q06a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q07" required>
+                <div>
+                    7) I know which goal the robot is going towards.
+                </div>
+                <crowd-radio-button name="g1q07a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q07a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q07a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q07a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q07a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q08" required>
+                <div>
+                    8) I did most of the work to make the team better.
+                </div>
+                <crowd-radio-button name="g1q08a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q08a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q08a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q08a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q08a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q9" required>
+                <div>
+                    9) The robot wanted to make the task easier for me.
+                </div>
+                <crowd-radio-button name="g1q09a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q09a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q09a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q09a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q09a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q10" required>
+                <div>
+                    10) I could <strong>not</strong> predict the robot’s goal.
+                </div>
+                <crowd-radio-button name="g1q10a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q10a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q10a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q10a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q10a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q11" required>
+                <div>
+                    11) Select the total number of possible robot goals.
+                </div>
+                <crowd-radio-button name="g1q11a1">1 goal</crowd-radio-button>
+                <crowd-radio-button name="g1q11a2">2 goals</crowd-radio-button>
+                <crowd-radio-button name="g1q11a3">3 goals</crowd-radio-button>
+                <crowd-radio-button name="g1q11a4">4 goals</crowd-radio-button>
+                <crowd-radio-button name="g1q11a5">5 goals</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g1q12" required>
+                <div>
+                    12) The robot did <strong>not</strong> care about supporting me.
+                </div>
+                <crowd-radio-button name="g1q12a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q12a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q12a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q12a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q12a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+             <crowd-radio-group name="g1q13" required>
+                <div>
+                    13) The robot contributed equally to the team performance.
+                </div>
+                <crowd-radio-button name="g1q13a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g1q13a2">2</crowd-radio-button>
+                <crowd-radio-button name="g1q13a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g1q13a4">4</crowd-radio-button>
+                <crowd-radio-button name="g1q13a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <button id="questions_done">Done</button>
+        <br>
+    </div>
+    <br>
+    <div id="game2questions" style="display: none;">
+    <div> Based on your experience in the test session, please answer <strong>ALL</strong> the questions below.</div>
+        <div>
+            <crowd-radio-group name="g2q01" required>
+                <div>
+                    1) The robot was trying to move in a way that helped me figure out which goal it was heading towards.
+                </div>
+                <crowd-radio-button name="g2q01a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q01a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q01a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q01a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q01a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q02" required>
+                <div>
+                    2) The robot was lazy.
+                </div>
+                <crowd-radio-button name="g2q02a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q02a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q02a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q02a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q02a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q03" required>
+                <div>
+                    3) The robot did <strong>not</strong> cooperate with me.
+                </div>
+                <crowd-radio-button name="g2q03a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q03a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q03a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q03a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q03a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q04" required>
+                <div>
+                    4) The robot did <strong>not</strong> move in a manner that made its intention clear.
+                </div>
+                <crowd-radio-button name="g2q04a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q04a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q04a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q04a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q04a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q05" required>
+                <div>
+                    5) The robot put forth its best effort.
+                </div>
+                <crowd-radio-button name="g2q05a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q05a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q05a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q05a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q05a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q06" required>
+                <div>
+                    6) The robot tried to help me.
+                </div>
+                <crowd-radio-button name="g2q06a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q06a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q06a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q06a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q06a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q07" required>
+                <div>
+                    7) I know which goal the robot is going towards.
+                </div>
+                <crowd-radio-button name="g2q07a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q07a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q07a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q07a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q07a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q08" required>
+                <div>
+                    8) I did most of the work to make the team better.
+                </div>
+                <crowd-radio-button name="g2q08a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q08a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q08a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q08a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q08a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q9" required>
+                <div>
+                    9) The robot wanted to make the task easier for me.
+                </div>
+                <crowd-radio-button name="g2q09a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q09a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q09a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q09a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q09a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q10" required>
+                <div>
+                    10) I could <strong>not</strong> predict the robot’s goal.
+                </div>
+                <crowd-radio-button name="g2q10a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q10a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q10a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q10a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q10a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+            <crowd-radio-group name="g2q11" required>
+                <div>
+                    11) The robot did <strong>not</strong> care about supporting me.
+                </div>
+                <crowd-radio-button name="g2q11a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q11a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q11a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q11a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q11a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+         <div>
+            <crowd-radio-group name="g2q12" required>
+                <div>
+                    12) The actions were displayed in which colors?
+                </div>
+                <crowd-radio-button name="g2q12a1">1 - black and yellow</crowd-radio-button>
+                <crowd-radio-button name="g2q12a2">2 - black and red</crowd-radio-button>
+                <crowd-radio-button name="g2q12a3">3 - blue and red</crowd-radio-button>
+                <crowd-radio-button name="g2q12a4">4 - green and red</crowd-radio-button>
+                <crowd-radio-button name="g2q12a5">5 - green and yellow</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div>
+             <crowd-radio-group name="g2q13" required>
+                <div>
+                    13) The robot contributed equally to the team performance.
+                </div>
+                <crowd-radio-button name="g2q13a1">1 - strongly disagree</crowd-radio-button>
+                <crowd-radio-button name="g2q13a2">2</crowd-radio-button>
+                <crowd-radio-button name="g2q13a3">3 - neutral</crowd-radio-button>
+                <crowd-radio-button name="g2q13a4">4</crowd-radio-button>
+                <crowd-radio-button name="g2q13a5">5 - strongly agree</crowd-radio-button>
+            </crowd-radio-group>
+        </div>
+        <br>
+        <div id="postgamequestions">
+            <div>
+                <div>
+                    14) Out of the two robot teammate programs, which one do you prefer? Why?
+                </div>
+                <crowd-input name="prefer" id="prefer_id" required></crowd-input>
+            </div>
+            <br>
+            <div>
+                <crowd-radio-group name="gender" id="id_gender" required>
+                    <div>
+                        15) What is your gender?
+                    </div>
+                    <crowd-radio-button name="gender_f" value="female">Female</crowd-radio-button>
+                    <crowd-radio-button name="gender_m" value="male">Male</crowd-radio-button>
+                    <crowd-radio-button name="gender_na" value="n/a">Prefer not to answer</crowd-radio-button>
+                </crowd-radio-group>
+            </div>
+            <br>
+            <div>
+                <div>
+                    16) What is your age?
+                </div>
+                <crowd-input name="age" id="age_id" allowed-pattern="^[0-9]+$" required></crowd-input>
+            </div>
+        </div>
+        <br>
+        <div id="submitdiv">
+            <crowd-button form-action="submit">Submit</crowd-button>
+        </div>
+    </div>
+    <div id="gamedatadiv" style="display: none;">
+        <crowd-input name="game0.1" id="game0.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game0.2" id="game0.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game0.3" id="game0.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game1.1" id="game1.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game1.2" id="game1.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game1.3" id="game1.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game2.1" id="game2.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game2.2" id="game2.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game2.3" id="game2.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game3.1" id="game3.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game3.2" id="game3.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="game3.3" id="game3.3" type="hidden" value="" required></crowd-input>
+
+        <crowd-input name="probe0.1" id="probe0.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe0.2" id="probe0.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe0.3" id="probe0.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe1.1" id="probe1.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe1.2" id="probe1.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe1.3" id="probe1.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe2.1" id="probe2.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe2.2" id="probe2.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe2.3" id="probe2.3" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe3.1" id="probe3.1" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe3.2" id="probe3.2" type="hidden" value="" required></crowd-input>
+        <crowd-input name="probe3.3" id="probe3.3" type="hidden" value="" required></crowd-input>
+    </div>
+</div>
+
+</crowd-form>
+
+</body>
+</html>
