@@ -9,6 +9,7 @@ This respository contains code for the following paper:
 ### 2. ```python TASC_tower.py``` to get policies for robot and human teammate
 ### 3. Input polices in ```MTurk_towers_effort.html```
 ### 4. Run study on Amazon Mechanical Turk (```MTurk_towers_effort.html```)
+#### Use Google Chrome
 
 ## Bibliography
 If you find this repository is useful in your research, please cite the paper:
