@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+
+"""
+    This class implements an MDP for the tower assembly task.
+"""
 
 class TowerAssembly:
     def __init__(self):
