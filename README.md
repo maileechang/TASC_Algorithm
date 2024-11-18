@@ -12,7 +12,7 @@ This respository contains code for the following paper:
 
 ## Bibliography
 If you find this repository is useful in your research, please cite the paper:
-
+```
 @inproceedings{chang2020tasc,
   title={TASC: Teammate Algorithm for Shared Cooperation},
   author={Chang, Mai Lee and Faulkner, Taylor Kessler and Wei, Thomas Benjamin and Short, Elaine Schaertl and Anandaraman, Gokul and Thomaz, Andrea Lockerd},
@@ -21,3 +21,4 @@ If you find this repository is useful in your research, please cite the paper:
   year={2020},
   organization={IEEE}
 }
+```
