@@ -5,11 +5,13 @@ This respository contains code for the following paper:
 [Chang, M. L., Faulkner, T. K., Wei, T. B., Short, E. S., Anandaraman, G., & Thomaz, A. L. (2020, October). TASC: Teammate Algorithm for Shared Cooperation. In 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) (pp. 11229-11236). IEEE.](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9340983)
 
 ## Tower Assembly Task
-### Set weights on value, effort, and legibility (wV, wE, wL) in TASC_tower.py 
-### Run TASC_tower.py to get policies for robot and human teammate
+### 1. Set weights on value, effort, and legibility (wV, wE, wL) in TASC_tower.py 
+### 2. Run TASC_tower.py to get policies for robot and human teammate
 ```
 python TASC_tower.py
 ```
+### 3. Input polices in MTurk_towers_effort.html
+### 4. Run study on Amazon Mechanical Turk (MTurk_towers_effort.html)
 
 ## Bibliography
 If you find this repository is useful in your research, please cite the paper:
